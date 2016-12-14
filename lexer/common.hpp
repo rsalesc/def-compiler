@@ -1,9 +1,11 @@
 #include <map>
+#include <set>
 #include <vector>
 #include <algorithm>
 #pragma once
 
 #define LABEL int16_t
+#define EPSILON ((LABEL)(1<<14))
 
 struct CharRange{
   LABEL left, right;
@@ -21,11 +23,12 @@ struct CharRange{
 struct State{
   std::map<CharRange, int> t;
 
-  /*
-    Add with no assertion a deterministic transition
-  */
   void add_transition(CharRange range, int idx){
     t[range] = idx;
+  }
+
+  decltype(t) transitions() const {
+    return t;
   }
 
   decltype(t)::iterator next_iterator(LABEL c){
@@ -41,22 +44,25 @@ struct State{
 };
 
 struct NState{
-  std::vector<std::pair<CharRange, int>> t;
+  std::map<CharRange, std::set<int>> t;
 
   void add_transition(CharRange range, int idx){
-    t.push_back(std::make_pair(range, idx));
+    t[range].insert(idx);
+  }
+
+  decltype(t) transitions() const {
+    return t;
+  }
+
+  decltype(t)::iterator next_iterator(LABEL c){
+    return t.lower_bound(CharRange(c));
   }
 
   std::vector<int> next(LABEL c){
     std::vector<int> res;
-    for(auto & p : t){
-      if(p.first.left <= c && c <= p.first.right){
-        res.push_back(p.second);
-      }
-    }
-
-    sort(res.begin(), res.end());
-    res.resize(unique(res.begin(), res.end()) - res.begin());
+    auto it = this->next_iterator(c);
+    if(it != t.end())
+      res = std::vector<int>(it->second.begin(), it->second.end());
 
     return res;
   }

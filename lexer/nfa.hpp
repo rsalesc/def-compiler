@@ -1,4 +1,4 @@
-#include "common.h"
+#include "common.hpp"
 #include <vector>
 #include <set>
 #include <map>
@@ -11,4 +11,5 @@ private:
 
 public:
   int size() const;
+  State state(int) const;
 };
