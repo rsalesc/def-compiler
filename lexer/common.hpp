@@ -22,6 +22,7 @@ struct CharRange{
 
 struct State{
   std::map<CharRange, int> t;
+  bool is_final = false;
 
   void add_transition(CharRange range, int idx){
     t[range] = idx;
@@ -45,6 +46,7 @@ struct State{
 
 struct NState{
   std::map<CharRange, std::set<int>> t;
+  bool is_final = false;
 
   void add_transition(CharRange range, int idx){
     t[range].insert(idx);
@@ -89,7 +91,7 @@ std::vector<CharRange> get_disjoint_ranges(std::vector<CharRange> v){
   return res;
 }
 
-bool get_range_intersection(const CharRange & a, const CharRange & b,
+bool get_range_intersection(CharRange a, CharRange b,
                             CharRange * res){
     if(a.right < b.left || b.right < a.left)
       return false;

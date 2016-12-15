@@ -7,9 +7,17 @@
 
 class NFA{
 private:
-  std::vector<State> states;
+  std::vector<NState> m_states;
 
 public:
   int size() const;
-  State state(int) const;
+
+  const std::vector<NState> & states() const;
+  std::vector<NState> & states();
+
+  NState & state(int);
+  const NState & state(int) const;
+  std::vector<int> get_floating_finals() const;
+
+  NState & add_state();
 };

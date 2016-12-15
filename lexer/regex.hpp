@@ -3,7 +3,5 @@
 
 #pragma once
 
-NFA kleene(const NFA & a, const NFA & b){
-  NFA res;
-  
-}
+NFA kleene(const NFA & a);
+NFA cat(const NFA & a, const NFA & b);
