@@ -5,8 +5,8 @@ SOURCES=$(wildcard **/*.cpp)
 OBJECTS=$(addprefix $(BDIR), $(SOURCES:.cpp=.o))
 BINARIES=lex
 
-CC=g++
-CFLAGS=-std=c++11 -O2
+CC=$(shell which g++)
+CFLAGS=-std=c++11 -O2 -g3
 LFLAGS=-lm
 
 OBJ_WILD=$(addprefix $(BDIR), %.o)
@@ -27,6 +27,6 @@ $(BDIR)%:
 	@mkdir -p $@
 
 clean:
-	@echo $(dir $(OBJECTS))
+	@echo $(CC)
 	rm -f *.o $(OBJECTS) $(BINARIES)
 	rm -rf $(BDIR)

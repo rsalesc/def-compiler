@@ -1,8 +1,11 @@
+#pragma once
+
 #include <map>
 #include <set>
 #include <vector>
 #include <algorithm>
-#pragma once
+#include <utility>
+#include <iostream>
 
 #define LABEL int16_t
 #define EPSILON ((LABEL)(1<<14))
@@ -12,6 +15,10 @@ struct CharRange{
 
   CharRange(LABEL l, LABEL r) : left(l), right(r){}
   CharRange(LABEL x) : CharRange(x, x) {}
+
+  bool in_range(LABEL c) const{
+    return left <= c && c <= right;
+  }
 
   bool operator<(const CharRange & rhs) const {
     if(left == rhs.left)
@@ -32,13 +39,16 @@ struct State{
     return t;
   }
 
-  decltype(t)::iterator next_iterator(LABEL c){
-    return t.lower_bound(CharRange(c));
+  decltype(t)::const_iterator next_iterator(LABEL c) const {
+    auto it = t.lower_bound(CharRange(c, std::numeric_limits<LABEL>::max()));
+    if(it == t.cbegin())
+      return t.cend();
+    return --it;
   }
 
-  int next(LABEL c){
+  int next(LABEL c) const {
     auto it = this->next_iterator(c);
-    if(it == t.end())
+    if(it == t.end() || !it->first.in_range(c))
       return -1;
     return it->second;
   }
@@ -47,6 +57,12 @@ struct State{
 struct NState{
   std::map<CharRange, std::set<int>> t;
   bool is_final = false;
+
+  std::set<int> epsilon_transitions() const {
+    if(this->t.count(EPSILON))
+      return this->t.at(EPSILON);
+    return std::set<int>();
+  }
 
   void add_transition(CharRange range, int idx){
     t[range].insert(idx);
@@ -60,38 +76,89 @@ struct NState{
     return t.lower_bound(CharRange(c));
   }
 
-  std::vector<int> next(LABEL c){
+  std::vector<int> next(LABEL c) const{
     std::vector<int> res;
-    auto it = this->next_iterator(c);
-    if(it != t.end())
-      res = std::vector<int>(it->second.begin(), it->second.end());
+
+    for(const auto & p : this->transitions()){
+      if(p.first.in_range(c)){
+        copy(p.second.begin(), p.second.end(), back_inserter(res));
+      }
+    }
 
     return res;
   }
 };
 
-std::vector<CharRange> get_disjoint_ranges(std::vector<CharRange> v){
-  sort(v.begin(), v.end());
-  reverse(v.begin(), v.end());
+inline std::vector<CharRange> get_disjoint_ranges(std::vector<CharRange> v){
+  std::vector<std::pair<LABEL, int>> vs;
   std::vector<CharRange> res;
 
-  while(v.size() > 1){
-    CharRange cur = v.back();
-    v.pop_back();
+  for(auto range : v)
+    vs.push_back(std::make_pair(range.left, -1)),
+    vs.push_back(std::make_pair(range.right+1, 1));
 
-    LABEL new_right = std::min(cur.right, static_cast<LABEL>(v.back().left-1));
-    if(new_right >= cur.left)
-      res.push_back(CharRange(cur.left, new_right));
-    v.back().right = std::max(v.back().right, cur.right);
+  sort(vs.begin(), vs.end());
+
+  int acc = 0;
+  for(int i = 0; i+1 < vs.size(); i++){
+    acc -= vs[i].second;
+    if(acc){
+      if(vs[i].first < vs[i+1].first){
+        res.push_back(CharRange(vs[i].first, vs[i+1].first-1));
+      }
+    }
   }
-
-  if(!v.empty())
-    res.push_back(v.back());
 
   return res;
 }
 
-bool get_range_intersection(CharRange a, CharRange b,
+inline std::vector<CharRange> get_united_ranges(std::vector<CharRange> v){
+  sort(v.begin(), v.end());
+
+  std::vector<CharRange> res;
+
+  LABEL lastl = -2;
+  LABEL lastr = -2;
+  for(const CharRange & range : v){
+    if(range.in_range(EPSILON))
+      continue;
+
+    if(range.left <= lastr+1){
+      lastr = std::max(lastr, range.right);
+    } else {
+      if(lastl != -2)
+        res.push_back({lastl, lastr});
+      lastl = range.left;
+      lastr = range.right;
+    }
+  }
+
+  if(lastl != -2)
+    res.push_back({lastl, lastr});
+
+  return res;
+}
+
+inline std::vector<CharRange> negate_ranges(std::vector<CharRange> v){
+  v = get_united_ranges(v);
+  LABEL last = -1;
+  std::vector<CharRange> res;
+
+  for(const CharRange & range : v){
+    if(range.in_range(EPSILON))
+      continue;
+
+    if(last+1 <= range.left-1)
+      res.push_back({(LABEL)(last+1), (LABEL)(range.left-1)});
+    last = range.right;
+  }
+
+  if(last < EPSILON-1)
+    res.push_back({(LABEL)(last+1), (LABEL)(EPSILON-1)});
+  return res;
+}
+
+inline bool get_range_intersection(CharRange a, CharRange b,
                             CharRange * res){
     if(a.right < b.left || b.right < a.left)
       return false;

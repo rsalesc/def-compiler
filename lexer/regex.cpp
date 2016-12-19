@@ -1,8 +1,10 @@
 #include "regex.hpp"
+#include <exception>
 
 namespace RegexNFA{
 
   NFA kleene(const NFA & a){
+
     NFA res = a;
     for(int i = 0; i < a.size(); i++){
       if(a.state(i).is_final){
@@ -20,7 +22,10 @@ namespace RegexNFA{
     int binit = res.size();
 
     for(const NState & s : b.states()){
-      NState & ns = res.add_state();
+      int ni = res.add_state();
+      NState & ns = res.state(ni);
+
+      ns.is_final = s.is_final;
       for(const auto & p : s.transitions()){
         for(int x : p.second){
           ns.add_transition(p.first, x + binit);
@@ -40,9 +45,12 @@ namespace RegexNFA{
 
   NFA unite(const NFA & a, const NFA & b){
     NFA res;
-    NState & ini = res.add_state();
+    res.add_state();
     for(const NState & s : a.states()){
-      NState & ns = res.add_state();
+      int ni = res.add_state();
+      NState & ns = res.state(ni);
+
+      ns.is_final = s.is_final;
 
       for(auto & p : s.transitions()){
         for(int x : p.second){
@@ -52,7 +60,10 @@ namespace RegexNFA{
     }
 
     for(const NState & s : b.states()){
-      NState & ns = res.add_state();
+      int ni = res.add_state();
+      NState & ns = res.state(ni);
+
+      ns.is_final = s.is_final;
 
       for(const auto & p : s.transitions()){
         for(int x : p.second){
@@ -61,8 +72,8 @@ namespace RegexNFA{
       }
     }
 
-    ini.add_transition(EPSILON, 1);
-    ini.add_transition(EPSILON, a.size() + 1);
+    res.state(0).add_transition(EPSILON, 1);
+    res.state(0).add_transition(EPSILON, a.size() + 1);
     return res;
   }
 
@@ -85,11 +96,15 @@ namespace RegexNFA{
 
   NFA from_range(const std::vector<CharRange> & v){
     NFA res;
-    NState & ini = res.add_state();
+    res.add_state();
+
     for(int i = 0; i < v.size(); i++){
-      res.add_state().is_final = true;
-      ini.add_transition(v[i], i+1);
+      res.state(0).add_transition(v[i], 1);
     }
+
+    res.add_state();
+    res.state(1).is_final = true;
+
     return res;
   }
 
@@ -99,10 +114,4 @@ namespace RegexNFA{
     return from_range(v);
   }
 
-}
-
-namespace Regex{
-  NFA nfa_from_regex(std::string regex){
-    return NFA();
-  }
 }
