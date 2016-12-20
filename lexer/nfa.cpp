@@ -114,8 +114,8 @@ DFA NFA::powerset() const {
         if(input_symbols[j].left > p.first.right)
           break;
 
-        dis.state(i).t[input_symbols[j]] =
-              std::set<int>(p.second.begin(), p.second.end());
+        std::set<int> & st = dis.state(i).t[input_symbols[j]];
+        st.insert(p.second.begin(), p.second.end());
       }
     }
   }

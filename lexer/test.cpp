@@ -1,5 +1,6 @@
 #include "regex.hpp"
 #include "lexer.hpp"
+#include "common/stream.hpp"
 #include <string>
 #include <iostream>
 
@@ -81,7 +82,8 @@ int main(){
   lexer.add_rule("DEC", "[1-9][0-9]*|0"); // botar - aqui ou é operador?
   lexer.add_rule("SYM", unite(syms));
 
-  for(Lexeme lex : lexer.run(std::cin)){
-    std::cout << lex.token << " \"" << lex.str << "\"" << std::endl;
+  Stream s(std::cin);
+  for(Token tok : lexer.run(s)){
+    std::cout << tok.type << " \"" << tok.lexeme << "\"" << std::endl;
   }
 }
