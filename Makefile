@@ -3,7 +3,7 @@ BDIR=build/
 INCLUDES=-I.
 SOURCES=$(wildcard **/*.cpp)
 OBJECTS=$(addprefix $(BDIR), $(SOURCES:.cpp=.o))
-BINARIES=lex
+BINARIES=a.out
 
 CC=$(shell which g++)
 CFLAGS=-std=c++11 -O2 -g3
@@ -17,7 +17,7 @@ make: $(BDIR) $(dir $(OBJECTS)) $(BINARIES)
 $(OBJ_WILD): $(SRC_WILD)
 	$(CC) $(INCLUDES) -c $< -o $@ $(CFLAGS)
 
-lex: $(OBJECTS)
+a.out: $(OBJECTS)
 	$(CC) -o $@ $(OBJECTS) $(LFLAGS)
 
 $(BDIR):
@@ -28,5 +28,5 @@ $(BDIR)%:
 
 clean:
 	@echo $(CC)
-	rm -f *.o $(OBJECTS) $(BINARIES)
+	rm -f *.o $(OBJECTS) $(BINARIES) *.exe a.out
 	rm -rf $(BDIR)

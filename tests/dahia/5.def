@@ -1,0 +1,18 @@
+def int main() {
+	int n_a_m_e = 4; // testing underlines
+	int ifbreak = 6; // test unseparated key words
+	if// test if close to a comment
+	(a == 5) {
+	    print(   3); // test spaces inside parenthesis
+    }
+	int n______ame = 5; // more underline testing
+	if (a             == 5) {
+	    print(1);
+    }
+    else {
+        print (2); // test spaces before parenthesis
+        print(5 ); // test spaces before close parenthesis
+        print(5) ; // test spaces after close parenthesis
+    }
+	return 0;
+}

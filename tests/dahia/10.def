@@ -1,0 +1,35 @@
+def int main(){
+    // explicit symbol testing
+    int a, b = 5;
+    int a , b= 5 ;
+    b = a + 5;
+    b =a+ 5;
+    b= a+ 5;
+    b=a+5;
+    b=a+ 5;
+    b = a*5;
+    b = a -5;
+    b = a/5;
+    b = -5;
+    int elseif=6 + b;
+    if(a<5) {
+        print(1);
+    }
+    else if(a>=5){print(1);}
+    else if (a >5){
+        print(1);
+    }
+    else if (a <= 10 - 6) {
+        
+    }
+    else if (a == b + 1) {//comment
+        print(1);
+    }
+    else if (a != 12) {
+        print(a);
+    }
+    else if (a == 1 || a == 2 || a == 3 || (a != 4 && a != 5 && a != 6 || a != 7) && !(a == 4 || a == 5 || a == 6 && a == 7)) { // comment }
+    }
+    elseif = 4;
+    return 0;
+}

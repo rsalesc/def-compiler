@@ -58,6 +58,7 @@ std::vector<Token> Lexer::run(Stream & s, bool show_hidden){
 
     if(maxmunch == 0){
       res.push_back({"ERROR", str.substr(0,1), location});
+      return res;
     }
 
     for(int i = 0; i < consumed - std::max(maxmunch, 1); i++){

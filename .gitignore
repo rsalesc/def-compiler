@@ -4,3 +4,4 @@ build/
 *.o
 *.stackdump
 *.exe
+a.out

@@ -1,0 +1,7 @@
+def int main() {
+	int n // testing attribution
+	= 4;
+	int k=i+1; // testing need for spaces
+	inti; // testing need for spaces as well
+	return 0;
+}
