@@ -3,7 +3,7 @@
 #include <utility>
 
 struct Token {
-  std::string type;
+  int type;
   std::string lexeme;
   std::pair<int, int> location;
 };

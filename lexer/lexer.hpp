@@ -1,5 +1,7 @@
 #pragma once
 
+#define LEXER_ERROR ((int16_t)(-1))
+
 #include "regex.hpp"
 #include "token.hpp"
 #include "../common/stream.hpp"
@@ -7,12 +9,12 @@
 #include <string>
 
 struct LexerRule {
-  std::string name;
+  int16_t name;
   DFA dfa;
 
   bool hidden = false;
 
-  LexerRule(std::string s, std::string re);
+  LexerRule(int16_t, std::string re);
 };
 
 class Lexer {
@@ -20,7 +22,7 @@ private:
   std::vector<LexerRule> m_rules;
 public:
 
-  void add_rule(std::string s, std::string re);
-  void add_hidden_rule(std::string s, std::string re);
+  void add_rule(int16_t s, std::string re);
+  void add_hidden_rule(int16_t, std::string re);
   std::vector<Token> run(Stream &, bool = false);
 };

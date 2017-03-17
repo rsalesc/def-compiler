@@ -1,0 +1,1 @@
+def void main() { int a = 3 + 5; int b; }

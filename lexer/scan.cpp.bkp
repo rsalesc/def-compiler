@@ -33,15 +33,18 @@ std::string unite(std::vector<std::string> s){
   return res;
 }
 
+string escape(const string & s){
+  string res;
+  for(char c : s){
+    res += "\\";
+    res += c;
+  }
+  return res;
+}
+
 std::vector<std::string> escape(std::vector<std::string> s){
   for(string & x : s){
-    string nw;
-    for(char c : x){
-      nw += "\\";
-      nw += c;
-    }
-
-    x = nw;
+    x = escape(x);
   }
 
   return s;

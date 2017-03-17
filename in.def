@@ -2,5 +2,11 @@ def int main()
 {
   int a;
   a = 4 + 5;
+  while(i < 0){}
+  if(a+5 <= 10){
+    break;
+  } else {
+    a = 5 != 5;
+  }
   return a;
 }

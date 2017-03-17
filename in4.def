@@ -1,0 +1,11 @@
+// add.def - simple addition example
+def int add(int x, int y)
+{
+  return x + y; // add the two parameters
+}
+def int main()
+{
+  int a;
+  a = 3;
+  print(add(a, 2));
+}

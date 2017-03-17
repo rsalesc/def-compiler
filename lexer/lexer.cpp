@@ -1,15 +1,15 @@
 #include "lexer.hpp"
 
-LexerRule::LexerRule(std::string s, std::string re){
+LexerRule::LexerRule(int16_t s, std::string re){
   this->name = s;
   this->dfa = Regex(re).get_dfa();
 }
 
-void Lexer::add_rule(std::string s, std::string re){
+void Lexer::add_rule(int16_t s, std::string re){
     this->m_rules.emplace_back(s, re);
 }
 
-void Lexer::add_hidden_rule(std::string s, std::string re){
+void Lexer::add_hidden_rule(int16_t s, std::string re){
     this->m_rules.emplace_back(s, re);
     this->m_rules.back().hidden = true;
 }
@@ -57,7 +57,7 @@ std::vector<Token> Lexer::run(Stream & s, bool show_hidden){
     // std::cerr << "consumed [" << str << "]" << std::endl;
 
     if(maxmunch == 0){
-      res.push_back({"ERROR", str.substr(0,1), location});
+      res.push_back({LEXER_ERROR, str.substr(0,1), location});
       return res;
     }
 
