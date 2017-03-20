@@ -1,0 +1,25 @@
+def int main() {
+
+    int a = 2;
+
+    if (a / 2 == 1) {
+
+        int b = 3;
+
+        if (b == 3) {
+
+            int c = 4;
+
+        }
+
+        if (c == 6) {
+
+            print(0);
+
+        }
+
+    }
+
+    return 0;
+
+}

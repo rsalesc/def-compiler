@@ -1,0 +1,48 @@
+int MOD;
+
+// mod for positive numbers
+def int mod(int x){
+  int q = x/MOD;
+  return x-q*MOD;
+}
+
+def int f(int f){
+  if(f == 0) return mod(0);
+  if(f == 1) return mod(1);
+  int a = mod(0);
+  int b = mod(1);
+  int i = 1;
+  while(i < f){
+    int tmp = b;
+    b = mod(a+b);
+    a = tmp;
+    i = i+1;
+  }
+
+  return b;
+}
+
+def void solve(int a, int b){
+  MOD = b;
+  print(f(a));
+}
+
+def void main(){
+  solve(1, 1);
+  solve(10, 10);
+  solve(22, 21);
+  solve(21, 1000000);
+  solve(30, 1021037);
+
+  int i;
+  while(i <= 10){
+    solve(i, 10000);
+    i = i+1;
+  }
+
+  i = 1;
+  while(i < 200){
+    solve(1213*i, 21092917);
+    i = i+1;
+  }
+}

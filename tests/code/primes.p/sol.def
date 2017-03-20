@@ -1,0 +1,36 @@
+def int mod(int x, int MOD){
+  int q = x/MOD;
+  return x-q*MOD;
+}
+
+def int count(int n){
+  if(n == 1){
+    return 0;
+  }
+
+  int i = 2;
+  while(i <= n && mod(n, i)){
+    i = i+1;
+  }
+
+  while(mod(n, i) == 0){
+    n = n/i;
+  }
+
+  return 1+count(n);
+}
+
+def void solve(int x){
+  print(count(x));
+}
+
+def void main(){
+  solve(42);
+  solve(192039);
+  solve(1200219);
+  solve(1);
+  solve(4242);
+  solve(56);
+  solve(474747);
+  solve(47);
+}

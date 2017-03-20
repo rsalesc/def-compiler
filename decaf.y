@@ -154,8 +154,8 @@ expr: expr '+' expr { $$ = create_binop($1, $3, $2); }
     | T_ID { $$ = make_shared<IdASTNode>($1); }
     ;
 
-type: T_INT { $$ = $1; }
-    | T_VOID { $$ = $1; }
+type: T_INT { $$ = make_shared<TypeASTNode>($1); }
+    | T_VOID { $$ = make_shared<TypeASTNode>($1); }
 %%
 
 #include "common/stream.hpp"
@@ -320,6 +320,8 @@ int main(int argc, char ** argv){
 
   run_lexer(argc, argv);
   yyparse();
+
+    do_semantics(root);
 
   root->print_node();
   cout << endl;

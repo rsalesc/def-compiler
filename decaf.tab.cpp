@@ -64,7 +64,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "decaf.y" /* yacc.c:339  */
 
-#include "ast.cpp"
+#include "semantics.cpp"
 #include <memory>
 #define YYSTYPE shared_ptr<ASTNode>
 #define CAST(x) (dynamic_pointer_cast<ASTNode>(x))
@@ -1648,13 +1648,13 @@ yyreduce:
 
   case 49:
 #line 157 "decaf.y" /* yacc.c:1646  */
-    { (yyval) = (yyvsp[0]); }
+    { (yyval) = make_shared<TypeASTNode>((yyvsp[0])); }
 #line 1653 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 50:
 #line 158 "decaf.y" /* yacc.c:1646  */
-    { (yyval) = (yyvsp[0]); }
+    { (yyval) = make_shared<TypeASTNode>((yyvsp[0])); }
 #line 1659 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
@@ -2052,6 +2052,8 @@ int main(int argc, char ** argv){
 
   run_lexer(argc, argv);
   yyparse();
+
+    do_semantics(root);
 
   root->print_node();
   cout << endl;

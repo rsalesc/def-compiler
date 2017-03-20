@@ -1,0 +1,35 @@
+def void solve(int a, int b){
+  int its = 0;
+  while(its < 50 && a != b){
+    if(a > b){
+      int tmp = b;
+      b = a;
+      a = tmp;
+    }
+
+    int na = 2*a;
+    int nb = b-a;
+
+    a = na;
+    b = nb;
+    its = its+1;
+  }
+
+  if(a != b){
+    print(-1);
+  } else {
+    print(its);
+  }
+}
+
+def void main(){
+  solve(3, 3);
+  solve(2, 6);
+  solve(10, 6);
+  solve(81, 15);
+  solve(10, 11);
+  solve(31002, 1290121);
+  solve(49, 2);
+  solve(1290381, 120121);
+  solve(99999, 999);
+}
