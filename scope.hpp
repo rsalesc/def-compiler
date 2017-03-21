@@ -6,6 +6,7 @@
 #include <typeinfo>
 #include <memory>
 #include <iostream>
+#include <cassert>
 
 using namespace std;
 
@@ -16,26 +17,47 @@ struct ScopeValue{
 
 struct ScopeFunc : public ScopeValue {
   bool returns;
-  ScopeFunc(bool returns = false) : returns(returns){}
+  int no_params;
+  int no_var;
+  ScopeFunc(bool returns = false, int no_params = 0, int no_var = 0)
+    : returns(returns), no_params(no_params), no_var(no_var){}
   bool returns_int() const { return returns; }
   bool returns_void() const { return !returns; }
+  bool compatible_with(int x) const { return x == no_params; }
   bool is_func() const override{
     return true;
   }
+
+  int count_declarations(){ return no_var; } const
+  void set_declarations(int x) { no_var = x; }
 };
 
 struct ScopeInt : public ScopeValue {
+  int val;
+  bool global;
+
+  ScopeInt(bool global = false) : global(global){}
+
+  operator int() const { return val; }
+  ScopeInt & operator=(int x){ val = x; return *this; }
+
+  int offset() const { return int(*this); }
+
+  bool is_global() const { return global; }
   bool is_int() const override{
     return true;
   }
 };
 
 struct Scope{
-  bool inside_loop, inside_int;
+  bool inside_int;
+  void * inside_loop;
+
   map<string, shared_ptr<ScopeInt>> table_int;
   map<string, shared_ptr<ScopeFunc>> table_func;
   Scope(){
-    inside_loop = inside_int = false;
+    inside_int = false;
+    inside_loop = 0;
   }
 
   bool check_int(string s) { return table_int.count(s); }
@@ -45,6 +67,7 @@ struct Scope{
 };
 
 struct ScopeStack{
+  int loop_cnt = 0, if_cnt = 0;
   vector<Scope> st;
 
   shared_ptr<ScopeInt> & _declare_int(string var){
@@ -59,12 +82,12 @@ struct ScopeStack{
 
     return st.back().get_func(var);
   }
-  ScopeFunc & declare_func(string var, bool returns_int = false){
-    return *(this->_declare_func(var) = make_shared<ScopeFunc>(returns_int));
+  ScopeFunc & declare_func(string var, bool returns_int = false, int no_params = 0, int no_var = 0){
+    return *(this->_declare_func(var) = make_shared<ScopeFunc>(returns_int, no_params, no_var));
   }
 
-  ScopeInt & declare_int(string var){
-    return *(this->_declare_int(var) = make_shared<ScopeInt>());
+  ScopeInt & declare_int(string var, bool is_global = false){
+    return *(this->_declare_int(var) = make_shared<ScopeInt>(is_global));
   }
 
   shared_ptr<ScopeInt> _get_int(string var){
@@ -123,13 +146,33 @@ struct ScopeStack{
     push();
   }
 
-  void push_loop(){
+  int push_if(){
     push();
-    st.back().inside_loop = true;
+    if_cnt++;
+    return if_cnt;
+  }
+
+  int push_else(){
+    push();
+    return if_cnt;
+  }
+
+  int push_loop(void * no){
+    push();
+    loop_cnt++;
+    st.back().inside_loop = no;
+    return loop_cnt;
   }
 
   void pop(){
     st.pop_back();
+  }
+
+  void * last_loop() const {
+    for(int i = (int)st.size()-1; i >= 0; i--)
+      if(st[i].inside_loop)
+        return st[i].inside_loop;
+    return 0;
   }
 
   bool is_int() const {
@@ -146,5 +189,13 @@ struct ScopeStack{
     }
 
     return false;
+  }
+
+  void * loop_block() const {
+    return st.back().inside_loop;
+  }
+
+  bool is_global() const {
+    return st.size() == 1;
   }
 };

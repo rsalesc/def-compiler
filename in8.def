@@ -1,11 +1,9 @@
-int oloko;
-
 // add.def - simple addition example
 def int add(int x, int y)
 {
   return x + y; // add the two parameters
 }
-def int main()
+def int main(int ab)
 {
   int a;
   a = 3;

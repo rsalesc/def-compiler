@@ -1506,16 +1506,16 @@ yyreduce:
 
   case 27:
 #line 119 "decaf.y" /* yacc.c:1646  */
-    { (yyval) = make_shared<ArgsASTNode>(); 
-                dynamic_pointer_cast<ArgsASTNode>((yyval))->append((yyvsp[0])); 
+    { (yyval) = make_shared<ArgsASTNode>();
+                dynamic_pointer_cast<ArgsASTNode>((yyval))->append((yyvsp[0]));
               }
 #line 1513 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
 #line 122 "decaf.y" /* yacc.c:1646  */
-    { (yyval) = (yyvsp[-2]); 
-                            dynamic_pointer_cast<ArgsASTNode>((yyval))->append((yyvsp[0])); 
+    { (yyval) = (yyvsp[-2]);
+                            dynamic_pointer_cast<ArgsASTNode>((yyval))->append((yyvsp[0]));
                           }
 #line 1521 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
@@ -1533,7 +1533,7 @@ yyreduce:
     {
             (yyval) = (yyvsp[-3]);
             shared_ptr<VarASTNode> var = make_shared<VarASTNode>((yyvsp[0]), (yyvsp[-1]));
-            dynamic_pointer_cast<ParamsASTNode>((yyval))->append(static_pointer_cast<ASTNode>(var)); 
+            dynamic_pointer_cast<ParamsASTNode>((yyval))->append(static_pointer_cast<ASTNode>(var));
          }
 #line 1539 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
@@ -1993,7 +1993,7 @@ void setup_lexer(int argc, char ** argv){
 
   lexer.add_hidden_rule(0, "[ \n\t\r]+"); // white
   lexer.add_hidden_rule(0, "//[^\n]*"); // comment
-  
+
   lexer.add_rule(T_IF, escape("if"));
   lexer.add_rule(T_BREAK, escape("break"));
   lexer.add_rule(T_CONTINUE, escape("continue"));
@@ -2053,10 +2053,7 @@ int main(int argc, char ** argv){
   run_lexer(argc, argv);
   yyparse();
 
-    do_semantics(root);
-
-  root->print_node();
-  cout << endl;
+  do_semantics(root);
 
   return 0;
 }

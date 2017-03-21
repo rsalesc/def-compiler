@@ -116,11 +116,11 @@ funccall: T_ID '(' arglist ')' { $$ = make_shared<CallASTNode>($1, dynamic_point
         | T_ID '(' ')' { $$ = make_shared<CallASTNode>($1); }
         ;
 
-arglist: expr { $$ = make_shared<ArgsASTNode>(); 
-                dynamic_pointer_cast<ArgsASTNode>($$)->append($1); 
+arglist: expr { $$ = make_shared<ArgsASTNode>();
+                dynamic_pointer_cast<ArgsASTNode>($$)->append($1);
               }
-       | arglist ',' expr { $$ = $1; 
-                            dynamic_pointer_cast<ArgsASTNode>($$)->append($3); 
+       | arglist ',' expr { $$ = $1;
+                            dynamic_pointer_cast<ArgsASTNode>($$)->append($3);
                           }
        ;
 
@@ -130,7 +130,7 @@ paramlist: type T_ID { $$ = make_shared<ParamsASTNode>();
          | paramlist ',' type T_ID {
             $$ = $1;
             shared_ptr<VarASTNode> var = make_shared<VarASTNode>($4, $3);
-            dynamic_pointer_cast<ParamsASTNode>($$)->append(static_pointer_cast<ASTNode>(var)); 
+            dynamic_pointer_cast<ParamsASTNode>($$)->append(static_pointer_cast<ASTNode>(var));
          }
          ;
 
@@ -261,7 +261,7 @@ void setup_lexer(int argc, char ** argv){
 
   lexer.add_hidden_rule(0, "[ \n\t\r]+"); // white
   lexer.add_hidden_rule(0, "//[^\n]*"); // comment
-  
+
   lexer.add_rule(T_IF, escape("if"));
   lexer.add_rule(T_BREAK, escape("break"));
   lexer.add_rule(T_CONTINUE, escape("continue"));
@@ -321,10 +321,7 @@ int main(int argc, char ** argv){
   run_lexer(argc, argv);
   yyparse();
 
-    do_semantics(root);
-
-  root->print_node();
-  cout << endl;
+  do_semantics(root);
 
   return 0;
 }
