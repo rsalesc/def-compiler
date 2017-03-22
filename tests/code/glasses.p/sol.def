@@ -1,5 +1,8 @@
 def void solve(int a, int b){
   int its = 0;
+  int na;
+  int nb;
+
   while(its < 50 && a != b){
     if(a > b){
       int tmp = b;
@@ -7,8 +10,8 @@ def void solve(int a, int b){
       a = tmp;
     }
 
-    int na = 2*a;
-    int nb = b-a;
+    na = 2*a;
+    nb = b-a;
 
     a = na;
     b = nb;

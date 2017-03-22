@@ -7,8 +7,8 @@ def int mod(int x){
 }
 
 def int f(int f){
-  if(f == 0) return 0;
-  if(f == 1) return mod(1);
+  if(f == 0) {return 0;}
+  if(f == 1) {return mod(1);}
   return mod(f(f-1)+f(f-2));
 }
 
@@ -18,13 +18,12 @@ def void solve(int a, int b){
 }
 
 def void main(){
+  int i;
   solve(1, 1);
   solve(10, 10);
-  solve(22, 21);
-  solve(21, 1000000);
-  solve(30, 1021037);
+  solve(17, 21);
+  solve(15, 1000000);
 
-  int i;
   while(i <= 10){
     solve(i, 10000);
     i = i+1;

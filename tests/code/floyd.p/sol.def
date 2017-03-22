@@ -11,11 +11,15 @@ def int f(int x){
 }
 
 def void solve(int x, int s, int m){
+  int a;
+  int b;
+  int ans = 1;
+
   step = s;
   MOD = m;
 
-  int a = x;
-  int b = f(x);
+  a = x;
+  b = f(x);
 
   while(a != b){
     a = f(a);
@@ -23,7 +27,6 @@ def void solve(int x, int s, int m){
   }
 
   b = f(b);
-  int ans = 1;
   while(a != b){
     b = f(b);
     ans = ans+1;
