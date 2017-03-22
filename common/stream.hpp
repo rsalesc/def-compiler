@@ -6,7 +6,7 @@
 class Stream {
 private:
   std::istream & s;
-  int line = 0, col = 0;
+  int line = 1, col = 0;
   std::vector<int> cols;
 
 public:

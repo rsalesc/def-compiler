@@ -4,7 +4,8 @@ BISON_FILE=decaf.y
 BISON_TABS=decaf.tab.cpp
 
 INCLUDES=-I.
-SOURCES=$(wildcard **/*.cpp) $(BISON_TABS)
+MAIN_SOURCES=main.cpp parser.cpp ast.cpp
+SOURCES=$(wildcard lexer/*.cpp) $(wildcard common/*.cpp) $(MAIN_SOURCES)
 OBJECTS=$(addprefix $(BDIR), $(SOURCES:.cpp=.o))
 
 BINARIES=a.out
@@ -26,9 +27,6 @@ $(OBJ_WILD): $(SRC_WILD)
 a.out: $(OBJECTS)
 	$(CC) -o $@ $(OBJECTS) $(LFLAGS)
 
-parser:
-	bison $(BISON_FILE) -o $(BISON_TABS)
-
 $(BDIR):
 	mkdir -p $@
 
@@ -37,6 +35,10 @@ $(BDIR)%:
 
 home: $(BDIR) parser $(dir $(OBJECTS)) $(BINARIES)
 	@echo "done..."
+
+package: make
+	rm -rf mata61.zip
+	zip -r mata61.zip main.cpp ast.cpp parser.cpp *.hpp lexer/ common/ tclap/ Makefile
 
 clean:
 	rm -f *.o $(OBJECTS) $(BINARIES) *.exe a.out

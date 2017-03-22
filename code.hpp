@@ -23,19 +23,9 @@ const std::string IF_END_PREFIX = "_if_end_";
 // ra saves the return address of a funtion call
 const std::vector<std::string> SAVED_REGISTERS = {"ra"};
 
-char _build_buf[256];
-
-int shift(int x){
-  return WORD*x;
-}
 
 // void buildf(const char *, ...)
 //     __attribute__((format (printf, 2, 3)));
-
-std::string buildf(const char *fmt, va_list arg) {
-    vsprintf(_build_buf, fmt, arg);
-    return std::string(_build_buf);
-}
 
 struct Code{
   std::string buf;
@@ -44,6 +34,16 @@ struct Code{
 
   Code(int offset = 0, int machine_offset = 0) :
         offset(offset), machine_offset(machine_offset) {}
+
+  std::string buildf(const char *fmt, va_list arg) {
+    char build_buf[256];
+    vsprintf(build_buf, fmt, arg);
+    return std::string(build_buf);
+  }
+
+  int shift(int x){
+    return WORD*x;
+  }
 
   void set_offset(int x) { offset = x; }
   void add_offset(int x = 1) { offset += x*WORD; }
