@@ -17,7 +17,9 @@ const std::string IF_END_PREFIX = "_if_end_";
 
 // a0 saves both the return of a function call and of an expression
 // t0 is a helper for machine operations
-// t1 is a helper for binary operations
+// t1 and t2 are helpers for binary operations, they should
+  // never be used in other places
+// t9 saves the address of the heap array
 // ra saves the return address of a funtion call
 const std::vector<std::string> SAVED_REGISTERS = {"ra"};
 
@@ -48,9 +50,15 @@ struct Code{
   int get_offset() const { return offset; }
   int next() { add_offset(); return get_offset(); }
 
+  void set_machine_offset(int x) { machine_offset = x; }
+  void add_machine_offset(int x) { machine_offset += WORD*x; }
   int get_machine_offset() const { return machine_offset; }
 
-  void set_machine_as_top() { machine_offset = 0; }
+  int set_machine_as_top() {
+    int old = machine_offset;
+    machine_offset = 0;
+    return old;
+  }
 
   std::string get_label(std::string s) { return LABEL_PREFIX + s; }
   std::pair<std::string, std::string> get_loop_label(int idx){
@@ -115,8 +123,8 @@ struct Code{
 
   void emit_machine_recover(){
     for(unsigned i = 0; i < SAVED_REGISTERS.size(); i++){
-      emit_top(SAVED_REGISTERS[i]);
-      emit_pop();
+      emit_machine_top(SAVED_REGISTERS[i]);
+      emit_machine_pop();
     }
   }
 
@@ -178,9 +186,9 @@ struct Code{
         emitf("xor $%s, $%s, $%s", BINARY_PARAMS);
         emit_to_bool(res);
       } else if(type == "&&"){
-        emit_to_bool(res, r1);
-        emit_to_bool("t1", r2);
-        emitf("and $%s, $%s, $t1", res.c_str(), res.c_str());
+        emit_to_bool("t1", r1);
+        emit_to_bool("t2", r2);
+        emitf("and $%s, $t1, $t2", res.c_str());
       } else if(type == "||"){
         emitf("or $%s, $%s, $%s", BINARY_PARAMS);
         emit_to_bool(res);

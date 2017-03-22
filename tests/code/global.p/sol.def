@@ -1,0 +1,11 @@
+int glob;
+
+def int go(int x, int y){
+  print(glob);
+  glob = glob+x*x;
+  return glob/4+5+y;
+}
+
+def void main(){
+  print(go(go(go(5, 42), go(10, go(5, 2))), 0));
+}

@@ -11,7 +11,7 @@ def int count(int n){
   }
 
   i = 2;
-  while(i <= n && mod(n, i)){
+  while(i < n && mod(n, i)){
     i = i+1;
   }
 
@@ -28,11 +28,8 @@ def void solve(int x){
 
 def void main(){
   solve(42);
-  solve(192039);
-  solve(1200219);
-  solve(1);
-  solve(4242);
-  solve(56);
-  solve(474747);
-  solve(47);
+  //solve(96);
+  //solve(1);
+  //solve(56);
+  //solve(47);
 }

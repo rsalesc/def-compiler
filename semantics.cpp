@@ -5,7 +5,7 @@
 using namespace std;
 typedef shared_ptr<ASTNode> PASTNode;
 
-void do_semantics(PASTNode root){
+void do_semantics(PASTNode root, bool code_gen){
   shared_ptr<ProgASTNode> program = dynamic_pointer_cast<ProgASTNode>(root);
 
   Code code;
@@ -13,5 +13,6 @@ void do_semantics(PASTNode root){
 
   program->check_and_generate(code, sta);
 
-  code.print();
+  if(code_gen)
+    code.print();
 }

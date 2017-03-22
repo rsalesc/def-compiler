@@ -4,6 +4,10 @@ def void solve(int a, int b){
   int nb;
 
   while(its < 50 && a != b){
+    print(a);
+    print(b);
+    print(-1);
+
     if(a > b){
       int tmp = b;
       b = a;

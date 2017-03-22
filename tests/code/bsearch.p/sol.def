@@ -1,0 +1,33 @@
+int MX;
+
+def void solve(int x){
+  int l = 0;
+  int r = MX;
+  while(l < r){
+    int mid = (l+r)/2;
+    if(mid*(mid+1)/2 >= x){
+      r = mid;
+    } else {
+      l = mid+1;
+    }
+  }
+
+  print(l);
+}
+
+def void main(){
+  int i = 1;
+  while(i*i < 1000000000){
+    i = i+1;
+  }
+
+  MX = i;
+
+  solve(42);
+  solve(109092190);
+  solve(999999999);
+  solve(80475327);
+  solve(424242424);
+  solve(24242424);
+  solve(199999289);
+}

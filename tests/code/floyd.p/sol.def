@@ -36,6 +36,8 @@ def void solve(int x, int s, int m){
 }
 
 def void main(){
-  solve(42, 2, 189281);
+  //solve(42, 2, 189281);
+  solve(42, 2, 1892);
   solve(2, 3, 7);
+  solve(56, 8081, 1991);
 }

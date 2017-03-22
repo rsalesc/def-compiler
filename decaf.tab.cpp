@@ -118,7 +118,7 @@ PASTNode merge_blocks(PASTNode a, PASTNode b){
 # undef YYERROR_VERBOSE
 # define YYERROR_VERBOSE 1
 #else
-# define YYERROR_VERBOSE 0
+# define YYERROR_VERBOSE 1
 #endif
 
 
@@ -163,16 +163,30 @@ typedef int YYSTYPE;
 # define YYSTYPE_IS_DECLARED 1
 #endif
 
+/* Location type.  */
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+typedef struct YYLTYPE YYLTYPE;
+struct YYLTYPE
+{
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+};
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+#endif
+
 
 extern YYSTYPE yylval;
-
+extern YYLTYPE yylloc;
 int yyparse (void);
 
 
 
 /* Copy the second part of user declarations.  */
 
-#line 176 "decaf.tab.cpp" /* yacc.c:358  */
+#line 190 "decaf.tab.cpp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -353,13 +367,15 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-         || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL \
+             && defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
   yytype_int16 yyss_alloc;
   YYSTYPE yyvs_alloc;
+  YYLTYPE yyls_alloc;
 };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
@@ -368,8 +384,8 @@ union yyalloc
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE)) \
-      + YYSTACK_GAP_MAXIMUM)
+     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE) + sizeof (YYLTYPE)) \
+      + 2 * YYSTACK_GAP_MAXIMUM)
 
 # define YYCOPY_NEEDED 1
 
@@ -471,16 +487,16 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    57,    57,    60,    62,    64,    67,    71,    77,    81,
-      88,    90,    93,    95,    98,   101,   102,   103,   104,   105,
-     106,   107,   108,   109,   112,   115,   116,   119,   122,   127,
-     130,   137,   138,   139,   140,   141,   142,   143,   144,   145,
-     146,   147,   148,   149,   150,   151,   152,   153,   154,   157,
-     158
+       0,    60,    60,    63,    65,    67,    70,    74,    80,    84,
+      91,    93,    96,    98,   101,   104,   105,   106,   107,   108,
+     109,   110,   111,   112,   115,   118,   119,   122,   125,   130,
+     133,   140,   141,   142,   143,   144,   145,   146,   147,   148,
+     149,   150,   151,   152,   153,   154,   155,   156,   157,   160,
+     161
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 0
+#if YYDEBUG || YYERROR_VERBOSE || 1
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
@@ -699,6 +715,32 @@ while (0)
 #define YYERRCODE       256
 
 
+/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
+   If N is 0, then set CURRENT to the empty location which ends
+   the previous symbol: RHS[0] (always defined).  */
+
+#ifndef YYLLOC_DEFAULT
+# define YYLLOC_DEFAULT(Current, Rhs, N)                                \
+    do                                                                  \
+      if (N)                                                            \
+        {                                                               \
+          (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;        \
+          (Current).first_column = YYRHSLOC (Rhs, 1).first_column;      \
+          (Current).last_line    = YYRHSLOC (Rhs, N).last_line;         \
+          (Current).last_column  = YYRHSLOC (Rhs, N).last_column;       \
+        }                                                               \
+      else                                                              \
+        {                                                               \
+          (Current).first_line   = (Current).last_line   =              \
+            YYRHSLOC (Rhs, 0).last_line;                                \
+          (Current).first_column = (Current).last_column =              \
+            YYRHSLOC (Rhs, 0).last_column;                              \
+        }                                                               \
+    while (0)
+#endif
+
+#define YYRHSLOC(Rhs, K) ((Rhs)[K])
+
 
 /* Enable debugging if requested.  */
 #if YYDEBUG
@@ -714,9 +756,48 @@ do {                                            \
     YYFPRINTF Args;                             \
 } while (0)
 
-/* This macro is provided for backward compatibility. */
+
+/* YY_LOCATION_PRINT -- Print the location on the stream.
+   This macro was not mandated originally: define only if we know
+   we won't break user code: when these are the locations we know.  */
+
 #ifndef YY_LOCATION_PRINT
-# define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
+
+/* Print *YYLOCP on YYO.  Private, do not rely on its existence. */
+
+YY_ATTRIBUTE_UNUSED
+static unsigned
+yy_location_print_ (FILE *yyo, YYLTYPE const * const yylocp)
+{
+  unsigned res = 0;
+  int end_col = 0 != yylocp->last_column ? yylocp->last_column - 1 : 0;
+  if (0 <= yylocp->first_line)
+    {
+      res += YYFPRINTF (yyo, "%d", yylocp->first_line);
+      if (0 <= yylocp->first_column)
+        res += YYFPRINTF (yyo, ".%d", yylocp->first_column);
+    }
+  if (0 <= yylocp->last_line)
+    {
+      if (yylocp->first_line < yylocp->last_line)
+        {
+          res += YYFPRINTF (yyo, "-%d", yylocp->last_line);
+          if (0 <= end_col)
+            res += YYFPRINTF (yyo, ".%d", end_col);
+        }
+      else if (0 <= end_col && yylocp->first_column < end_col)
+        res += YYFPRINTF (yyo, "-%d", end_col);
+    }
+  return res;
+ }
+
+#  define YY_LOCATION_PRINT(File, Loc)          \
+  yy_location_print_ (File, &(Loc))
+
+# else
+#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+# endif
 #endif
 
 
@@ -726,7 +807,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value); \
+                  Type, Value, Location); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -737,10 +818,11 @@ do {                                                                      \
 `----------------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp)
 {
   FILE *yyo = yyoutput;
   YYUSE (yyo);
+  YYUSE (yylocationp);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
@@ -756,12 +838,14 @@ yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvalue
 `--------------------------------*/
 
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp)
 {
   YYFPRINTF (yyoutput, "%s %s (",
              yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
+  YY_LOCATION_PRINT (yyoutput, *yylocationp);
+  YYFPRINTF (yyoutput, ": ");
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -794,7 +878,7 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
+yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule)
 {
   unsigned long int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -808,7 +892,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
       yy_symbol_print (stderr,
                        yystos[yyssp[yyi + 1 - yynrhs]],
                        &(yyvsp[(yyi + 1) - (yynrhs)])
-                                              );
+                       , &(yylsp[(yyi + 1) - (yynrhs)])                       );
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -816,7 +900,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule); \
+    yy_reduce_print (yyssp, yyvsp, yylsp, Rule); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1074,9 +1158,10 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocationp)
 {
   YYUSE (yyvaluep);
+  YYUSE (yylocationp);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
@@ -1094,6 +1179,12 @@ int yychar;
 
 /* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
+/* Location data for the lookahead symbol.  */
+YYLTYPE yylloc
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
+  = { 1, 1, 1, 1 }
+# endif
+;
 /* Number of syntax errors so far.  */
 int yynerrs;
 
@@ -1112,6 +1203,7 @@ yyparse (void)
     /* The stacks and their tools:
        'yyss': related to states.
        'yyvs': related to semantic values.
+       'yyls': related to locations.
 
        Refer to the stacks through separate pointers, to allow yyoverflow
        to reallocate them elsewhere.  */
@@ -1126,6 +1218,14 @@ yyparse (void)
     YYSTYPE *yyvs;
     YYSTYPE *yyvsp;
 
+    /* The location stack.  */
+    YYLTYPE yylsa[YYINITDEPTH];
+    YYLTYPE *yyls;
+    YYLTYPE *yylsp;
+
+    /* The locations where the error started and ended.  */
+    YYLTYPE yyerror_range[3];
+
     YYSIZE_T yystacksize;
 
   int yyn;
@@ -1135,6 +1235,7 @@ yyparse (void)
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
+  YYLTYPE yyloc;
 
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
@@ -1143,7 +1244,7 @@ yyparse (void)
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
-#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
+#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N), yylsp -= (N))
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
@@ -1151,6 +1252,7 @@ yyparse (void)
 
   yyssp = yyss = yyssa;
   yyvsp = yyvs = yyvsa;
+  yylsp = yyls = yylsa;
   yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
@@ -1159,6 +1261,7 @@ yyparse (void)
   yyerrstatus = 0;
   yynerrs = 0;
   yychar = YYEMPTY; /* Cause a token to be read.  */
+  yylsp[0] = yylloc;
   goto yysetstate;
 
 /*------------------------------------------------------------.
@@ -1184,6 +1287,7 @@ yyparse (void)
            memory.  */
         YYSTYPE *yyvs1 = yyvs;
         yytype_int16 *yyss1 = yyss;
+        YYLTYPE *yyls1 = yyls;
 
         /* Each stack pointer address is followed by the size of the
            data in use in that stack, in bytes.  This used to be a
@@ -1192,8 +1296,10 @@ yyparse (void)
         yyoverflow (YY_("memory exhausted"),
                     &yyss1, yysize * sizeof (*yyssp),
                     &yyvs1, yysize * sizeof (*yyvsp),
+                    &yyls1, yysize * sizeof (*yylsp),
                     &yystacksize);
 
+        yyls = yyls1;
         yyss = yyss1;
         yyvs = yyvs1;
       }
@@ -1216,6 +1322,7 @@ yyparse (void)
           goto yyexhaustedlab;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
+        YYSTACK_RELOCATE (yyls_alloc, yyls);
 #  undef YYSTACK_RELOCATE
         if (yyss1 != yyssa)
           YYSTACK_FREE (yyss1);
@@ -1225,6 +1332,7 @@ yyparse (void)
 
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
+      yylsp = yyls + yysize - 1;
 
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
                   (unsigned long int) yystacksize));
@@ -1302,7 +1410,7 @@ yybackup:
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   *++yyvsp = yylval;
   YY_IGNORE_MAYBE_UNINITIALIZED_END
-
+  *++yylsp = yylloc;
   goto yynewstate;
 
 
@@ -1333,333 +1441,334 @@ yyreduce:
      GCC warning that YYVAL may be used uninitialized.  */
   yyval = yyvsp[1-yylen];
 
-
+  /* Default location.  */
+  YYLLOC_DEFAULT (yyloc, (yylsp - yylen), yylen);
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
         case 2:
-#line 57 "decaf.y" /* yacc.c:1646  */
+#line 60 "decaf.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[0]); root = (yyval); }
-#line 1344 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1453 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 60 "decaf.y" /* yacc.c:1646  */
+#line 63 "decaf.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[0]);
                           dynamic_pointer_cast<ProgASTNode>((yyval))->append((yyvsp[-1]));}
-#line 1351 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1460 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 62 "decaf.y" /* yacc.c:1646  */
+#line 65 "decaf.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[0]);
                           dynamic_pointer_cast<ProgASTNode>((yyval))->append((yyvsp[-1]));}
-#line 1358 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1467 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 64 "decaf.y" /* yacc.c:1646  */
+#line 67 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<ProgASTNode>(); }
-#line 1364 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1473 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 67 "decaf.y" /* yacc.c:1646  */
+#line 70 "decaf.y" /* yacc.c:1646  */
     {
       shared_ptr<ASTNode> var = make_shared<VarASTNode>((yyvsp[-1]), (yyvsp[-2]));
       (yyval) = make_shared<DecvarASTNode>(var);
       }
-#line 1373 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1482 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 71 "decaf.y" /* yacc.c:1646  */
+#line 74 "decaf.y" /* yacc.c:1646  */
     {
       shared_ptr<ASTNode> var = make_shared<VarASTNode>((yyvsp[-3]), (yyvsp[-4]));
       (yyval) = make_shared<DecvarASTNode>(var, (yyvsp[-1]));
       }
-#line 1382 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1491 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 77 "decaf.y" /* yacc.c:1646  */
+#line 80 "decaf.y" /* yacc.c:1646  */
     {
         shared_ptr<ASTNode> var = make_shared<VarASTNode>((yyvsp[-4]), (yyvsp[-5]));
         (yyval) = make_shared<DecfuncASTNode>(var, (yyvsp[-2]), (yyvsp[0]));
       }
-#line 1391 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1500 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 81 "decaf.y" /* yacc.c:1646  */
+#line 84 "decaf.y" /* yacc.c:1646  */
     {
         shared_ptr<ASTNode> var = make_shared<VarASTNode>((yyvsp[-3]), (yyvsp[-4]));
         shared_ptr<ASTNode> params = make_shared<ParamsASTNode>();
         (yyval) = make_shared<DecfuncASTNode>(var, params, (yyvsp[0]));
       }
-#line 1401 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1510 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 88 "decaf.y" /* yacc.c:1646  */
+#line 91 "decaf.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[-1]);
             dynamic_pointer_cast<BlockASTNode>((yyval))->append_declaration((yyvsp[0])); }
-#line 1408 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1517 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 90 "decaf.y" /* yacc.c:1646  */
+#line 93 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<BlockASTNode>(); }
-#line 1414 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1523 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 93 "decaf.y" /* yacc.c:1646  */
+#line 96 "decaf.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[-1]);
             dynamic_pointer_cast<BlockASTNode>((yyval))->append_statement((yyvsp[0])); }
-#line 1421 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1530 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 95 "decaf.y" /* yacc.c:1646  */
+#line 98 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<BlockASTNode>(); }
-#line 1427 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1536 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 98 "decaf.y" /* yacc.c:1646  */
+#line 101 "decaf.y" /* yacc.c:1646  */
     { (yyval) = merge_blocks((yyvsp[-2]), (yyvsp[-1])); }
-#line 1433 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1542 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 101 "decaf.y" /* yacc.c:1646  */
+#line 104 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<IfASTNode>((yyvsp[-2]), (yyvsp[0])); }
-#line 1439 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1548 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 102 "decaf.y" /* yacc.c:1646  */
+#line 105 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<IfASTNode>((yyvsp[-4]), (yyvsp[-2]), (yyvsp[0])); }
-#line 1445 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1554 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 103 "decaf.y" /* yacc.c:1646  */
+#line 106 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<WhileASTNode>((yyvsp[-2]), (yyvsp[0])); }
-#line 1451 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1560 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 104 "decaf.y" /* yacc.c:1646  */
+#line 107 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<ReturnASTNode>(); }
-#line 1457 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1566 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 105 "decaf.y" /* yacc.c:1646  */
+#line 108 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<ReturnASTNode>((yyvsp[-1])); }
-#line 1463 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1572 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 106 "decaf.y" /* yacc.c:1646  */
+#line 109 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<BreakASTNode>(); }
-#line 1469 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1578 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 107 "decaf.y" /* yacc.c:1646  */
+#line 110 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<ContinueASTNode>(); }
-#line 1475 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1584 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 108 "decaf.y" /* yacc.c:1646  */
+#line 111 "decaf.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[-1]); }
-#line 1481 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1590 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 109 "decaf.y" /* yacc.c:1646  */
+#line 112 "decaf.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[-1]); }
-#line 1487 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1596 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 112 "decaf.y" /* yacc.c:1646  */
+#line 115 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<AssignASTNode>((yyvsp[-2]), (yyvsp[0])); }
-#line 1493 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1602 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 115 "decaf.y" /* yacc.c:1646  */
+#line 118 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<CallASTNode>((yyvsp[-3]), dynamic_pointer_cast<ArgsASTNode>((yyvsp[-1])));}
-#line 1499 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1608 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 116 "decaf.y" /* yacc.c:1646  */
+#line 119 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<CallASTNode>((yyvsp[-2])); }
-#line 1505 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1614 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 119 "decaf.y" /* yacc.c:1646  */
+#line 122 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<ArgsASTNode>();
                 dynamic_pointer_cast<ArgsASTNode>((yyval))->append((yyvsp[0]));
               }
-#line 1513 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1622 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 122 "decaf.y" /* yacc.c:1646  */
+#line 125 "decaf.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[-2]);
                             dynamic_pointer_cast<ArgsASTNode>((yyval))->append((yyvsp[0]));
                           }
-#line 1521 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1630 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 127 "decaf.y" /* yacc.c:1646  */
+#line 130 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<ParamsASTNode>();
          shared_ptr<VarASTNode> var = make_shared<VarASTNode>((yyvsp[0]), (yyvsp[-1]));
          dynamic_pointer_cast<ParamsASTNode>((yyval))->append(static_pointer_cast<ASTNode>(var)); }
-#line 1529 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1638 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 130 "decaf.y" /* yacc.c:1646  */
+#line 133 "decaf.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[-3]);
             shared_ptr<VarASTNode> var = make_shared<VarASTNode>((yyvsp[0]), (yyvsp[-1]));
             dynamic_pointer_cast<ParamsASTNode>((yyval))->append(static_pointer_cast<ASTNode>(var));
          }
-#line 1539 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1648 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 137 "decaf.y" /* yacc.c:1646  */
+#line 140 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1545 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1654 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 138 "decaf.y" /* yacc.c:1646  */
+#line 141 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1551 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1660 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 139 "decaf.y" /* yacc.c:1646  */
+#line 142 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1557 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1666 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 140 "decaf.y" /* yacc.c:1646  */
+#line 143 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1563 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1672 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 141 "decaf.y" /* yacc.c:1646  */
+#line 144 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1569 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1678 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 142 "decaf.y" /* yacc.c:1646  */
+#line 145 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1575 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1684 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 143 "decaf.y" /* yacc.c:1646  */
+#line 146 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1581 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1690 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 144 "decaf.y" /* yacc.c:1646  */
+#line 147 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1587 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1696 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 145 "decaf.y" /* yacc.c:1646  */
+#line 148 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1593 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1702 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 146 "decaf.y" /* yacc.c:1646  */
+#line 149 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1599 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1708 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 147 "decaf.y" /* yacc.c:1646  */
+#line 150 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1605 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1714 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 148 "decaf.y" /* yacc.c:1646  */
+#line 151 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_binop((yyvsp[-2]), (yyvsp[0]), (yyvsp[-1])); }
-#line 1611 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1720 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 149 "decaf.y" /* yacc.c:1646  */
+#line 152 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_unop((yyvsp[0]), (yyvsp[-1])); }
-#line 1617 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1726 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 150 "decaf.y" /* yacc.c:1646  */
+#line 153 "decaf.y" /* yacc.c:1646  */
     { (yyval) = create_unop((yyvsp[0]), (yyvsp[-1])); }
-#line 1623 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1732 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 151 "decaf.y" /* yacc.c:1646  */
+#line 154 "decaf.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[-1]); }
-#line 1629 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1738 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 152 "decaf.y" /* yacc.c:1646  */
+#line 155 "decaf.y" /* yacc.c:1646  */
     { (yyval) = (yyvsp[0]); }
-#line 1635 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1744 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 153 "decaf.y" /* yacc.c:1646  */
+#line 156 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<DecASTNode>((yyvsp[0])); }
-#line 1641 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1750 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 154 "decaf.y" /* yacc.c:1646  */
+#line 157 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<IdASTNode>((yyvsp[0])); }
-#line 1647 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1756 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 157 "decaf.y" /* yacc.c:1646  */
+#line 160 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<TypeASTNode>((yyvsp[0])); }
-#line 1653 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1762 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
   case 50:
-#line 158 "decaf.y" /* yacc.c:1646  */
+#line 161 "decaf.y" /* yacc.c:1646  */
     { (yyval) = make_shared<TypeASTNode>((yyvsp[0])); }
-#line 1659 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1768 "decaf.tab.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 1663 "decaf.tab.cpp" /* yacc.c:1646  */
+#line 1772 "decaf.tab.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1680,6 +1789,7 @@ yyreduce:
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
+  *++yylsp = yyloc;
 
   /* Now 'shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -1744,7 +1854,7 @@ yyerrlab:
 #endif
     }
 
-
+  yyerror_range[1] = yylloc;
 
   if (yyerrstatus == 3)
     {
@@ -1760,7 +1870,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval);
+                      yytoken, &yylval, &yylloc);
           yychar = YYEMPTY;
         }
     }
@@ -1781,6 +1891,7 @@ yyerrorlab:
   if (/*CONSTCOND*/ 0)
      goto yyerrorlab;
 
+  yyerror_range[1] = yylsp[1-yylen];
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYERROR.  */
   YYPOPSTACK (yylen);
@@ -1814,9 +1925,9 @@ yyerrlab1:
       if (yyssp == yyss)
         YYABORT;
 
-
+      yyerror_range[1] = *yylsp;
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp);
+                  yystos[yystate], yyvsp, yylsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1826,6 +1937,11 @@ yyerrlab1:
   *++yyvsp = yylval;
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 
+  yyerror_range[2] = yylloc;
+  /* Using YYLLOC is tempting, but would change the location of
+     the lookahead.  YYLOC is available though.  */
+  YYLLOC_DEFAULT (yyloc, yyerror_range, 2);
+  *++yylsp = yyloc;
 
   /* Shift the error token.  */
   YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
@@ -1865,7 +1981,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval);
+                  yytoken, &yylval, &yylloc);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -1874,7 +1990,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[*yyssp], yyvsp);
+                  yystos[*yyssp], yyvsp, yylsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1887,12 +2003,13 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 159 "decaf.y" /* yacc.c:1906  */
+#line 162 "decaf.y" /* yacc.c:1906  */
 
 
 #include "common/stream.hpp"
 #include "lexer/regex.hpp"
 #include "lexer/lexer.hpp"
+#include "tclap/CmdLine.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -1953,15 +2070,15 @@ std::vector<std::string> escape(std::vector<std::string> s){
   return s;
 }
 
-void setup_output(int argc, char ** argv){
-  if(argc > 2){
-    freopen(argv[2], "w", stdout);
+void setup_output(std::string output_fn){
+  if(!output_fn.empty()){
+    FILE * opened = freopen(output_fn.c_str(), "w", stdout);
   }
 }
 
-void run_lexer(int argc, char ** argv){
+void run_lexer(std::string input_fn){
   // input setup
-  std::istream in(argc > 1 ? get_input_buf(argv[1]) : std::cin.rdbuf());
+  std::istream in(!input_fn.empty() ? get_input_buf(input_fn.c_str()) : std::cin.rdbuf());
   Stream st(in);
 
   // run lexer
@@ -1969,7 +2086,7 @@ void run_lexer(int argc, char ** argv){
   tokens_ptr = cur_ptr = 0;
 }
 
-void setup_lexer(int argc, char ** argv){
+void setup_lexer(){
   std::vector<std::string> syms = {
     "(",
     "{",
@@ -2028,8 +2145,8 @@ int yylex(){
 
   if(tokens[tokens_ptr].type == LEXER_ERROR){
     const Token & tok = tokens[tokens_ptr];
-    fprintf(stderr, "lexical error on %d:%d\t%s\n",
-        tok.location.first, tok.location.second, tok.lexeme.c_str());
+    fprintf(stderr, "lexical error on %d:%d\n",
+        tok.location.first, tok.location.second);
     exit(1);
   } else if(!tokens[tokens_ptr].type){
     yylval = make_shared<ASTNode>(string(1, tokens[tokens_ptr].lexeme[cur_ptr]));
@@ -2047,13 +2164,62 @@ void yyerror(const char * s){
 }
 
 int main(int argc, char ** argv){
-  setup_lexer(argc, argv);
-  setup_output(argc, argv);
+  std::string input_fn, output_fn;
+  int phase;
+  bool output_data;
 
-  run_lexer(argc, argv);
-  yyparse();
+  TCLAP::CmdLine cmd("MATA61 Def Compiler", ' ', "2016.2");
+  
+  TCLAP::UnlabeledValueArg<std::string> input_fn_cmd("input_file", 
+    "specifies the input file", 
+    true, 
+    "", 
+    "input_file");
 
-  do_semantics(root);
+  TCLAP::UnlabeledValueArg<std::string> output_fn_cmd("output_file", 
+    "specifies an optional output file (or use stdout)", 
+    false, 
+    "", 
+    "output_file");
+
+  TCLAP::ValueArg<int> phase_cmd("p",
+    "phase",
+    "which phases will run (0: til lex, 1: til syntactic, 2: til semantics, 3: compiles)",
+    false,
+    3,
+    "phase");
+
+  TCLAP::SwitchArg output_cmd("n", "no-output", "supress output data from earlier phases", true);
+
+  cmd.add(input_fn_cmd);
+  cmd.add(output_fn_cmd);
+  cmd.add(phase_cmd);
+  cmd.add(output_cmd);
+
+  cmd.parse(argc, argv);
+
+  input_fn = input_fn_cmd.getValue();
+  output_fn = output_fn_cmd.getValue();
+  phase = phase_cmd.getValue();
+  output_data = output_cmd.getValue();
+
+  setup_lexer();
+  setup_output(output_fn);
+
+  run_lexer(input_fn);
+
+  if(phase >= 1){
+    yyparse();
+  }
+
+  if(phase >= 2){
+    do_semantics(root, phase >= 3);
+  }
+
+  if((phase == 1 || phase == 2) && output_data){
+    root->print_node();
+    puts("");
+  }
 
   return 0;
 }

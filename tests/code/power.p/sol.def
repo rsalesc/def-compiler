@@ -1,0 +1,30 @@
+def int mod(int x, int MOD){
+  return x-x/MOD*MOD;
+}
+
+def int power(int x, int p, int MOD){
+  int res;
+  if(p == 0) {
+    return mod(1, MOD);
+  }
+  if(p == 1){
+    return mod(x, MOD);
+  }
+  res = power(x, p/2, MOD);
+  res = mod(res*res, MOD);
+  if(mod(p, 2) == 1){
+    res = mod(res*mod(x, MOD), MOD);
+  }
+
+  return res;
+}
+
+def void solve(int x, int p, int MOD){
+  print(power(x, p, MOD));
+}
+
+def void main(){
+  solve(42, 19212001, 10212);
+  solve(56, 9910291, 1290);
+  solve(109290192, 920190219, 20102);
+}

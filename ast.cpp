@@ -248,11 +248,13 @@ struct CallASTNode : public ASTNode{
       throw runtime_error("wrong number of arguments in function call");
 
     code.emit_machine_save();
+    int old_machine_offset = code.get_machine_offset();
     args->check_and_generate(code, sta);
     code.set_machine_as_top();
     code.emit_grow(func.count_declarations());
     code.emitf("jal %s", code.get_label(get_func_name()).c_str());
     code.emit_shrink(func.count_declarations() + args->size());
+    code.set_machine_offset(old_machine_offset);
     code.emit_machine_recover();
   }
 };
@@ -279,10 +281,11 @@ struct AssignASTNode : public ASTNode{
 
   void check_and_generate(Code & code, ScopeStack & sta){
     ScopeInt & var = sta.get_int(id->get_text());
+    int old_off = code.get_machine_offset();
     check_and_generate_expression(expr, code, sta);
-    assert(code.get_machine_offset() == 0);
+    assert(code.get_machine_offset() == old_off);
 
-    if(sta.is_global())
+    if(var.is_global())
       code.emitf("sw $a0, %d($t9)", var.offset());
     else
       code.emitf("sw $a0, %d($sp)", var.offset());
@@ -389,10 +392,8 @@ struct ProgASTNode : public ListASTNode{
 };
 
 struct LoopASTNode : public ASTNode{
-  Code expr_code;
   int idx = 0;
 
-  Code get_expression_code() const { return expr_code; }
   int get_index() const { return idx; }
 };
 
@@ -433,23 +434,8 @@ struct BlockASTNode : public ASTNode{
     for(auto p : declarations)
       p->check_and_generate(code, sta);
 
-    if(sta.loop_block()){
-      LoopASTNode * no = (LoopASTNode*)sta.loop_block();
-      auto label = code.get_loop_label(no->get_index());
-      code.emit_loop_begin(no->get_index());
-      code += no->get_expression_code();
-      code.emitf("beqz $a0, %s", label.second.c_str());
-    }
-
     for(auto p : statements)
       p->check_and_generate(code, sta);
-
-    if(sta.loop_block()){
-      LoopASTNode * no = (LoopASTNode*)sta.loop_block();
-      auto label = code.get_loop_label(no->get_index());
-      code.emitf("j %s", label.first.c_str());
-      code.emit_loop_end(no->get_index());
-    }
   }
 };
 
@@ -488,6 +474,7 @@ struct DecfuncASTNode : public ASTNode {
 
     // emit function label
     Code code_func;
+    code_func.emitf("nop # %s (%d declarations)", this->var->get_text().c_str(), count_declarations());
     code_func.emit_label(this->var->get_text());
 
     if(this->var->is_int())
@@ -596,13 +583,21 @@ struct WhileASTNode : public LoopASTNode{
   void check_and_generate(Code & code, ScopeStack & sta){
     idx = sta.push_loop(this);
 
-    expr_code = Code(code.get_offset(), code.get_machine_offset());
-    check_and_generate_expression(expr, expr_code, sta);
-    assert(code.get_offset() == expr_code.get_offset());
-    assert(code.get_machine_offset() == expr_code.get_machine_offset());
+    // expr_code = Code(code.get_offset(), code.get_machine_offset());
+    auto label = code.get_loop_label(get_index());
+    code.emit_loop_begin(get_index());
+
+    int old_off = code.get_machine_offset();
+    check_and_generate_expression(expr, code, sta);
+    code.emitf("beqz $a0, %s", label.second.c_str());
+    assert(code.get_machine_offset() == old_off);
+    // assert(code.get_offset() == expr_code.get_offset());
+    // assert(code.get_machine_offset() == expr_code.get_machine_offset());
 
     block->check_and_generate(code, sta);
 
+    code.emitf("j %s", label.first.c_str());
+    code.emit_loop_end(get_index());
     sta.pop();
   }
 };

@@ -39,6 +39,9 @@ PASTNode merge_blocks(PASTNode a, PASTNode b){
 
 %}
 
+%define parse.error verbose
+%locations
+
 %token T_ID T_DEC
 %token T_IF T_BREAK T_CONTINUE T_WHILE T_DEF T_ELSE T_INT T_VOID T_RETURN
 %token T_LEQ T_GEQ T_EQ T_NEQ T_AND T_OR
@@ -161,6 +164,7 @@ type: T_INT { $$ = make_shared<TypeASTNode>($1); }
 #include "common/stream.hpp"
 #include "lexer/regex.hpp"
 #include "lexer/lexer.hpp"
+#include "tclap/CmdLine.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -221,15 +225,15 @@ std::vector<std::string> escape(std::vector<std::string> s){
   return s;
 }
 
-void setup_output(int argc, char ** argv){
-  if(argc > 2){
-    freopen(argv[2], "w", stdout);
+void setup_output(std::string output_fn){
+  if(!output_fn.empty()){
+    FILE * opened = freopen(output_fn.c_str(), "w", stdout);
   }
 }
 
-void run_lexer(int argc, char ** argv){
+void run_lexer(std::string input_fn){
   // input setup
-  std::istream in(argc > 1 ? get_input_buf(argv[1]) : std::cin.rdbuf());
+  std::istream in(!input_fn.empty() ? get_input_buf(input_fn.c_str()) : std::cin.rdbuf());
   Stream st(in);
 
   // run lexer
@@ -237,7 +241,7 @@ void run_lexer(int argc, char ** argv){
   tokens_ptr = cur_ptr = 0;
 }
 
-void setup_lexer(int argc, char ** argv){
+void setup_lexer(){
   std::vector<std::string> syms = {
     "(",
     "{",
@@ -296,8 +300,8 @@ int yylex(){
 
   if(tokens[tokens_ptr].type == LEXER_ERROR){
     const Token & tok = tokens[tokens_ptr];
-    fprintf(stderr, "lexical error on %d:%d\t%s\n",
-        tok.location.first, tok.location.second, tok.lexeme.c_str());
+    fprintf(stderr, "lexical error on %d:%d\n",
+        tok.location.first, tok.location.second);
     exit(1);
   } else if(!tokens[tokens_ptr].type){
     yylval = make_shared<ASTNode>(string(1, tokens[tokens_ptr].lexeme[cur_ptr]));
@@ -315,13 +319,66 @@ void yyerror(const char * s){
 }
 
 int main(int argc, char ** argv){
-  setup_lexer(argc, argv);
-  setup_output(argc, argv);
+  /*
+  * COMMAND LINE PARSING
+  **/
+  std::string input_fn, output_fn;
+  int phase;
+  bool output_data;
 
-  run_lexer(argc, argv);
-  yyparse();
+  TCLAP::CmdLine cmd("MATA61 Def Compiler", ' ', "2016.2");
+  
+  TCLAP::UnlabeledValueArg<std::string> input_fn_cmd("input_file", 
+    "specifies the input file", 
+    true, 
+    "", 
+    "input_file");
 
-  do_semantics(root);
+  TCLAP::UnlabeledValueArg<std::string> output_fn_cmd("output_file", 
+    "specifies an optional output file (or use stdout)", 
+    false, 
+    "", 
+    "output_file");
+
+  TCLAP::ValueArg<int> phase_cmd("p",
+    "phase",
+    "which phases will run (0: til lex, 1: til syntactic, 2: til semantics, 3: compiles)",
+    false,
+    3,
+    "phase");
+
+  TCLAP::SwitchArg output_cmd("n", "no-output", "supress output data from earlier phases", true);
+
+  cmd.add(input_fn_cmd);
+  cmd.add(output_fn_cmd);
+  cmd.add(phase_cmd);
+  cmd.add(output_cmd);
+
+  cmd.parse(argc, argv);
+
+  input_fn = input_fn_cmd.getValue();
+  output_fn = output_fn_cmd.getValue();
+  phase = phase_cmd.getValue();
+  output_data = output_cmd.getValue();
+
+  /* Actual code */
+  setup_lexer();
+  setup_output(output_fn);
+
+  run_lexer(input_fn);
+
+  if(phase >= 1){
+    yyparse();
+  }
+
+  if(phase >= 2){
+    do_semantics(root, phase >= 3);
+  }
+
+  if((phase == 1 || phase == 2) && output_data){
+    root->print_node();
+    puts("");
+  }
 
   return 0;
 }
