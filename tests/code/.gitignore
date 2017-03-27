@@ -1,8 +1,0 @@
-*.p/out
-*.p/sol.c
-*.p/sol.s
-*.p/yours.out
-cdef.yy.cpp
-cdef
-a.out
-**/out

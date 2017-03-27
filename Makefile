@@ -1,8 +1,5 @@
 BDIR=build/
 
-BISON_FILE=decaf.y
-BISON_TABS=decaf.tab.cpp
-
 INCLUDES=-I.
 MAIN_SOURCES=main.cpp parser.cpp ast.cpp
 SOURCES=$(wildcard lexer/*.cpp) $(wildcard common/*.cpp) $(MAIN_SOURCES)
@@ -11,7 +8,7 @@ OBJECTS=$(addprefix $(BDIR), $(SOURCES:.cpp=.o))
 BINARIES=a.out
 
 CC=$(shell which g++)
-CFLAGS=-std=c++11 -O2 -g3
+CFLAGS=-std=c++11 -O2
 LFLAGS=-lm
 
 BISON=bison

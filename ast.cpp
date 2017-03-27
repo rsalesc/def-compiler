@@ -14,7 +14,8 @@ void DecASTNode::check_and_generate(Code & code, ScopeStack & sta){
 void IdASTNode::check_and_generate(Code & code, ScopeStack & sta){
   ScopeInt & var = sta.get_int(get_text());
   if(var.is_global()){
-    code.emitf("lw $a0, %d($t9)", var.offset());
+    code.load_globals();
+    code.emitf("lw $a0, %d($t0)", var.offset());
   } else {
     code.emitf("lw $a0, %d($sp)", var.offset() + code.get_machine_offset());
   }
@@ -74,8 +75,10 @@ void AssignASTNode::check_and_generate(Code & code, ScopeStack & sta){
   check_and_generate_expression(expr, code, sta);
   assert(code.get_machine_offset() == old_off);
 
-  if(var.is_global())
-    code.emitf("sw $a0, %d($t9)", var.offset());
+  if(var.is_global()){
+    code.load_globals();
+    code.emitf("sw $a0, %d($t0)", var.offset());
+  }
   else
     code.emitf("sw $a0, %d($sp)", var.offset());
 }
@@ -84,18 +87,21 @@ void DecvarASTNode::check_and_generate(Code & code, ScopeStack & sta){
   if(var->is_void())
     throw runtime_error("variables cannot be declared void");
 
-  int off = sta.declare_int(var->get_text(), sta.is_global()) = code.next();
 
   if(!expr){
-    if(sta.is_global())
-      code.emitf("sw $0, %d($t9)", off);
-    else
+    int off = sta.declare_int(var->get_text(), sta.is_global()) = code.next();
+    if(sta.is_global()){
+      code.load_globals();
+      code.emitf("sw $0, %d($t0)", off);
+    }else
       code.emitf("sw $0, %d($sp)", off);
   } else{
     check_and_generate_expression(expr, code, sta);
-    if(sta.is_global())
-      code.emitf("sw $a0, %d($t9)", off);
-    else
+    int off = sta.declare_int(var->get_text(), sta.is_global()) = code.next();
+    if(sta.is_global()){
+      code.load_globals();
+      code.emitf("sw $a0, %d($t0)", off);
+    } else
       code.emitf("sw $a0, %d($sp)", off);
   }
 }
@@ -117,7 +123,6 @@ void ProgASTNode::check_and_generate(Code & code, ScopeStack & sta){
 
   Code glob_code;
   glob_code.emit_entry_point();
-  glob_code.emitf("la $t9, %s", GLOBALS_LABEL.c_str());
 
   for(auto p : child)
     if(dynamic_pointer_cast<DecvarASTNode>(p))
@@ -143,7 +148,8 @@ void DecfuncASTNode::check_and_generate(Code & code, ScopeStack & sta){
 
   // emit function label
   Code code_func;
-  code_func.emitf("nop # %s (%d declarations)", this->var->get_text().c_str(), count_declarations());
+  code_func.emitf("nop # %s (%d declarations)", this->var->get_text().c_str(),
+                  count_declarations());
   code_func.emit_label(this->var->get_text());
 
   if(this->var->is_int())

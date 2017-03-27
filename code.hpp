@@ -19,7 +19,6 @@ const std::string IF_END_PREFIX = "_if_end_";
 // t0 is a helper for machine operations
 // t1 and t2 are helpers for binary operations, they should
   // never be used in other places
-// t9 saves the address of the heap array
 // ra saves the return address of a funtion call
 const std::vector<std::string> SAVED_REGISTERS = {"ra"};
 
@@ -129,6 +128,7 @@ struct Code{
   }
 
   void emit_globals(int sz) { emitf("%s: .space %d", GLOBALS_LABEL.c_str(), WORD*(sz+1)); }
+  void load_globals() { emitf("la $t0, %s", GLOBALS_LABEL.c_str()); }
   void emit_segment(){ push_line(".data"); }
   void emit_header(){ push_line(".text"); }
   void emit_label(std::string s) { push_line(LABEL_PREFIX + s + std::string(":")); }
