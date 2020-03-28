@@ -1,4 +1,4 @@
-# MATA61
+# Def Compiler for MATA61
 
 A compiler for Def language (a simplified language which looks like C).
 
